@@ -1,6 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
 import { googleConfig, appleConfig, hasuraConfig } from '../config';
+import HasuraUser from '../models/hasuraUser';
 
 // Utility function for handling Google OAuth authentication
 export const handleGoogleOAuth = async (token: string) => {
@@ -36,23 +37,11 @@ export const handleAppleOAuth = async (token: string) => {
 };
 
 // Utility function for handling Hasura GraphQL authentication
-export const handleHasuraAuth = async (token: string) => {
+export const handleHasuraAuth = async (email: string, password: string) => {
+  const hasuraUser = new HasuraUser();
   try {
-    const response = await axios.post(hasuraConfig.endpoint, {
-      query: `
-        query {
-          user {
-            id
-            email
-          }
-        }
-      `,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    return response.data.data.user;
+    const user = await hasuraUser.authenticate(email, password);
+    return user;
   } catch (error) {
     throw new Error('Failed to authenticate Hasura token');
   }
