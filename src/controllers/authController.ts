@@ -4,6 +4,7 @@ import { jwtConfig, googleConfig, appleConfig } from '../config';
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
 import { User } from '../models/user';
+import HasuraUser from '../models/hasuraUser';
 
 class AuthController {
   private req: Request;
@@ -123,13 +124,10 @@ class AuthController {
     const { email, password } = this.req.body;
 
     try {
-      const user = await User.findOne({ email });
+      const hasuraUser = new HasuraUser();
+      const user = await hasuraUser.authenticate(email, password);
 
-      if (!user || !user.comparePassword(password)) {
-        return this.res.status(401).json({ message: 'Invalid email or password' });
-      }
-
-      const token = jwt.sign({ id: user._id }, jwtConfig.secret, { expiresIn: '1h' });
+      const token = jwt.sign({ id: user.id }, jwtConfig.secret, { expiresIn: '1h' });
       this.res.status(200).json({ token });
     } catch (error) {
       this.res.status(500).json({ message: 'Error authenticating with Hasura', error });

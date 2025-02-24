@@ -3,6 +3,7 @@ import { jwtConfig, googleConfig, appleConfig, hasuraConfig } from '../config';
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
 import { User } from '../models/user';
+import HasuraUser from '../models/hasuraUser';
 
 class AuthService {
   async register(email: string, password: string) {
@@ -78,13 +79,10 @@ class AuthService {
   }
 
   async hasuraAuth(email: string, password: string) {
-    const user = await User.findOne({ email });
+    const hasuraUser = new HasuraUser();
+    const user = await hasuraUser.authenticate(email, password);
 
-    if (!user || !user.comparePassword(password)) {
-      throw new Error('Invalid email or password');
-    }
-
-    const token = jwt.sign({ id: user._id }, jwtConfig.secret, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user.id }, jwtConfig.secret, { expiresIn: '1h' });
     return { token };
   }
 }
